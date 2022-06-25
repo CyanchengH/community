@@ -2,7 +2,10 @@ package com.newcoder.community.controller;
 
 import com.newcoder.community.annotation.LoginRequired;
 import com.newcoder.community.entity.User;
+import com.newcoder.community.service.FollowService;
+import com.newcoder.community.service.LikeService;
 import com.newcoder.community.service.UserService;
+import com.newcoder.community.util.CommunityConstant;
 import com.newcoder.community.util.CommunityUtil;
 import com.newcoder.community.util.HostHolder;
 import org.apache.commons.lang3.StringUtils;
@@ -16,9 +19,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.multipart.MultipartFile;
-import sun.tracing.MultiplexProviderFactory;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -27,7 +31,7 @@ import java.util.Map;
 
 @Controller
 @RequestMapping("/user")
-public class UserController {
+public class UserController implements CommunityConstant {
 
     private static final Logger looger = LoggerFactory.getLogger(UserController.class);
 
@@ -46,6 +50,12 @@ public class UserController {
     @Autowired
     private HostHolder hostHolder;
 
+    @Autowired
+    private LikeService likeService;
+
+    @Autowired
+    private FollowService followService;
+
     @LoginRequired
     @RequestMapping(path = "/setting", method = RequestMethod.GET)
     public String getSettingPage() {
@@ -55,6 +65,8 @@ public class UserController {
     @LoginRequired
     @RequestMapping(path = "/upload", method = RequestMethod.POST)
     public String uploadHeader(MultipartFile headerImage, Model model){
+
+        // 没有上传图片
         if(headerImage == null){
             model.addAttribute("error", "您还没有选择图片！");
             return "/site/setting";
@@ -91,6 +103,7 @@ public class UserController {
 
     // 获取头像
     //???这里怎么知道filename的？？
+
     @RequestMapping(path = "/header/{fileName}",method = RequestMethod.GET)
     public void getHeader(@PathVariable("fileName") String fileName, HttpServletResponse response){
         // 服务器存放路径
@@ -111,8 +124,84 @@ public class UserController {
         } catch (IOException e) {
             looger.error("读取头像失败： " + e.getMessage());
             throw new RuntimeException(e);
+
         }
 
     }
+
+    /**  修改密码
+     *1、在账号设置页面，填写原密码以及新密码，点击保存时将数据提交给服务器。
+     *2、服务器检查原密码是否正确，若正确则将密码修改为新密码，并重定向到退出功能，强制用户重新登录。若错误则返回到账号设置页面，给与相应提示。
+     */
+   /* @LoginRequired
+    @RequestMapping(path = "/updatepw", method = RequestMethod.POST)
+    public String changePassword(String oldpassword, String newpassword, Model model){
+
+        // 获取当前用户
+        User user = hostHolder.getUser();
+        // 验证密码
+        oldpassword =oldpassword + user.getSalt();
+        if (!user.getPassword().equals(oldpassword)) {
+            // 密码不正确：
+            model.addAttribute("passwordMsg", "密码不正确！");
+            //返回到账户设置界面
+            return "/site/setting";
+        }else {
+            // 密码正确：
+            // 更新密码
+            userService.updatePassword(user.getId(),newpassword + user.getSalt());
+            // 重定向到退出功能，强制用户重新登陆
+           
+            return "redirect:/logout";
+        }
+    }*/
+
+    // 修改密码
+    @RequestMapping(path = "/updatePassword", method = RequestMethod.POST)
+    public String updatePassword(String oldPassword, String newPassword, Model model) {
+        User user = hostHolder.getUser();
+        Map<String, Object> map = userService.updatePassword(user.getId(), oldPassword, newPassword);
+        if (map == null || map.isEmpty()) {
+            return "redirect:/logout";
+        } else {
+            model.addAttribute("oldPasswordMsg", map.get("oldPasswordMsg"));
+            model.addAttribute("newPasswordMsg", map.get("newPasswordMsg"));
+            return "/site/setting";
+        }
+    }
+
+    // 个人主页
+    @RequestMapping(path = "/profile/{userId}", method = RequestMethod.GET)
+    public String getProfilePage(@PathVariable("userId") int userId, Model model){
+        User user = userService.findUserById(userId);
+
+        if(user == null){
+            throw new RuntimeException("该用户不存在！");
+        }
+
+        // 用户
+        model.addAttribute("user",user);
+        // 点赞数量
+        int likeCount = likeService.findUserLikeCount(userId);
+        model.addAttribute("likeCount", likeCount);
+        // 查询关注数量
+        long followeeCount = followService.findFolloweeCount(userId, ENTITY_TYPE_USER);
+        model.addAttribute("followeeCount", followeeCount);
+        // 查询粉丝数量
+        long followerCount = followService.findFollowerCount(ENTITY_TYPE_USER, userId);
+        model.addAttribute("followerCount", followerCount);
+        // 当前用户对该用户是否已关注
+        boolean hasFollowed = false;
+        if (hostHolder.getUser() != null){
+            hasFollowed = followService.hasFollowed(hostHolder.getUser().getId(), ENTITY_TYPE_USER, userId);
+        }
+        model.addAttribute("hasFollowed", hasFollowed);
+
+
+
+        return "/site/profile";
+
+    }
+
 
 }
