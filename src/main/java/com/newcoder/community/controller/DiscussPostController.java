@@ -158,8 +158,8 @@ public class DiscussPostController implements CommunityConstant {
     // 置顶
     @RequestMapping(path = "/top", method = RequestMethod.POST)
     @ResponseBody
-    public String setTop(int id){
-        discussPostService.updateType(id,1);
+    public String setTop(int id) {
+        discussPostService.updateType(id, 1);
 
         // 触发发帖事件
         Event event = new Event()
@@ -175,8 +175,8 @@ public class DiscussPostController implements CommunityConstant {
     // 加精
     @RequestMapping(path = "/wonderful", method = RequestMethod.POST)
     @ResponseBody
-    public String setWonderful(int id){
-        discussPostService.updateStatus(id,1);
+    public String setWonderful(int id) {
+        discussPostService.updateStatus(id, 1);
 
         // 触发发帖事件
         Event event = new Event()
@@ -192,8 +192,8 @@ public class DiscussPostController implements CommunityConstant {
     // 删除
     @RequestMapping(path = "/delete", method = RequestMethod.POST)
     @ResponseBody
-    public String setDelete(int id){
-        discussPostService.updateStatus(id,2);
+    public String setDelete(int id) {
+        discussPostService.updateStatus(id, 2);
 
         // 触发删帖事件
         Event event = new Event()

@@ -103,6 +103,4 @@ public class EventConsumer implements CommunityConstant {
 
         elasticsearchService.deleteDiscussPost(event.getEntityId());
     }
-
-
 }
