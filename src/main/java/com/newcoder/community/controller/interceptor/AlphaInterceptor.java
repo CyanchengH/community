@@ -12,23 +12,22 @@ import javax.servlet.http.HttpServletResponse;
 @Component
 public class AlphaInterceptor implements HandlerInterceptor {
 
-    // 打印日志，日志主键实例化
     private static final Logger logger = LoggerFactory.getLogger(AlphaInterceptor.class);
 
-    // 在controller之前执行
+    // 在Controller之前执行
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         logger.debug("preHandle: " + handler.toString());
         return true;
     }
 
-    // 在controller之后执行
+    // 在Controller之后执行
     @Override
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
         logger.debug("postHandle: " + handler.toString());
     }
 
-    // 在template之后执行
+    // 在TemplateEngine之后执行
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
         logger.debug("afterCompletion: " + handler.toString());
