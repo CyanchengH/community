@@ -14,12 +14,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Future;
 
 
 @Component
@@ -41,6 +43,18 @@ public class EventConsumer implements CommunityConstant {
 
     @Value("${wk.image.storage}")
     private String wkImageStorage;
+
+//    @Value("${qiniu.key.access}")
+//    private String accessKey;
+//
+//    @Value("${qiniu.key.secret}")
+//    private String secretKey;
+
+//    @Value("${qiniu.bucker.share.name}")
+//    private String shareBucketName;
+    // 定时任务线程池 - 传至云服务器
+    @Autowired
+    private ThreadPoolTaskScheduler taskScheduler;
 
     @KafkaListener(topics = {TOPIC_COMMENT, TOPIC_LIKE, TOPIC_FOLLOW})
     public void handleCommentMessage(ConsumerRecord record) {
@@ -137,7 +151,80 @@ public class EventConsumer implements CommunityConstant {
             logger.info("生成长图成功：" + cmd);
         } catch (IOException e){
             logger.info("生成长图失败：" + e.getMessage());
-
         }
+
+        // 启用定时器，监视该图片，一旦生成了，则上传至七牛云
+        // UploadTask task = new UploadTask(fileName, suffix);
+        // Future future = taskScheduler.scheduleAtFixedRate(task, 500);
+        // task.setFuture(future);
     }
+
+//    class UploadTask implements Runnable{
+//
+//        // 文件名称
+//        private String fileName;
+//        // 文件后缀
+//        private String suffix;
+//        // 启动任务的返回值
+//        private Future future;
+//        // 开始时间
+//        private long startTime;
+//        // 上传次数
+//        private int uploadTimes;
+//
+//        public UploadTask(String fileName, String suffix){
+//            this.fileName = fileName;
+//            this.suffix = suffix;
+//            this.startTime = System.currentTimeMills();
+//        }
+//
+//        public void setFuture(Future future){
+//            this.future = future;
+//        }
+//        @Override
+//        public void run() {
+//        // 兜底方案，超时
+//        // 生成失败
+//        if(System.currentTimeMills()- startTime > 30000)(
+//              logger.error("执行时间过长，终止任务：" + fileName)；
+//              future.cancel(true);
+//              return;
+//        )
+//        // 上传失败
+//        if(uploadTimes >= 3)(
+//              logger.error("上传次数过多，终止任务：" + fileName)；
+//              future.cancel(true);
+//              return;
+//        )
+//        String path = wkImageStore + "/" + fileName + suffix;
+//        File file = new File(path);
+//        if(file.exists()){
+//            logger.info(String.fomat("开始第%次上传[%s].", ++uploadTime, fileName));
+//            // 设置响应信息
+//            StringMap policy = new StringMap();
+//            policy.put("returnBody", CommunityUtil.getJSONString(0));
+//            // 生成上传凭证
+//            Auth auth = Auth.create(accessKey, secretKey);
+//            String uploadToken = auth.uploadToken(shareBucketName, fileName, 3600, policy);
+//            // 指定上传机房
+//            UploadManage manager = new UploadManager(new Configuration(zone.zonel());
+//            try{
+//                  // 开始上传图片
+//                  Response response = manager.put(
+//                      path, fileName, uploadToken, null, "image/" + suffix, false);
+//                  // 处理响应结果
+//                  JSONObject.parseObject(response.bodyString());
+//                  if(json == null || json.get("code") == null || !json.get("code").toString.equals("0")){
+//                      logger.info(String.format("第%d次上传失败[%d].", uploadTimes, fileName));
+//                  }else {
+//                      logger.info(String.format("第%d次上传失败[%d].", uploadTimes, fileName));
+//                      future.cancel(true);
+//                  }
+//            }catch(QiniuException) {
+//                  logger.info(String.format("第%d次上传失败[%d].", uploadTimes, fileName));
+//            }
+//        }else {
+//              logger.info("等待图片生成[" + fileName + "].");
+//        }
+//    }
 }

@@ -11,7 +11,10 @@ import com.newcoder.community.util.CommunityUtil;
 import com.newcoder.community.util.HostHolder;
 import com.newcoder.community.util.RedisKeyUtil;
 import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,7 +29,6 @@ import java.util.*;
 @Controller
 @RequestMapping("/discuss")
 public class DiscussPostController implements CommunityConstant {
-
     @Autowired
     private DiscussPostService discussPostService;
 
